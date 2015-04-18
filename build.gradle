@@ -1,0 +1,29 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'CsvToAvro'
+
+repositories {
+  mavenCentral()
+}
+
+dependencies {
+  compile (
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-core', version: '2.2.2'],
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.2.2'],
+    [group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.2.2']
+  )
+}
+
+jar {
+  description = "Test description"
+  doFirst {
+    into( 'lib' ) {
+      from configurations.compile
+    }
+  }
+
+  manifest {
+    attributes 'Main-Class': 'CsvToAvro'
+  }
+}
