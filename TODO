@@ -1,0 +1,8 @@
+1. Avro Streaming output
+2. Add testing for avro streaming
+3. Add testing for different avro types
+4. Handling different avro data types by avro converter
+5. Add loging to inform end user what happened when afro serialization fails
+6. Add correctly handling of input parameters.
+7. Code review for each class.
+8. Modify README to add information how to compile and run the tool.
