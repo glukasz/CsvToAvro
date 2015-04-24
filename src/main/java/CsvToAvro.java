@@ -13,8 +13,10 @@ public class CsvToAvro {
   private final static int FILE_INPUT_ARGS = 3;
   private final static int STREAM_INPUT_ARGS = 1;
 
-  private static boolean streamInput = false;
+  private static boolean streamInputOutput = false;
   private static boolean fileInput = false;
+  private static boolean fileOutput = false;
+
   private static String inputPath;
   private static String outputPath;
   private static String schemaPath;
@@ -31,11 +33,12 @@ public class CsvToAvro {
     try {
       CsvToAvroConverter converter;
 
-      if (fileInput) {
+      if (fileInput && fileOutput) {
         converter = new CsvToAvroConverter(inputPath, schemaPath, outputPath);
         converter.convert();
-      } else if (streamInput) {
-
+      } else if (streamInputOutput) {
+        converter = new CsvToAvroConverter(System.in, schemaPath, System.out);
+        converter.convert();
       }
 
     } catch(Exception ex) {
@@ -45,10 +48,13 @@ public class CsvToAvro {
 
   private static void printUsage() {
     System.out.println("usage: CsvToAvro --input <csv_file> --schema <avro_schema> --output <avro_file>");
-    System.out.println("\tCsvToAvro --schema <avro_schema> -c < <intput_csv> > <avro_file>");
+    System.out.println("       CsvToAvro --schema <avro_schema> -c < <intput_csv> > <avro_file>");
   }
 
   private static boolean processArgs(String [] args) {
+
+    boolean schemaInput = false;
+
     Set<String> allowedArgs = new HashSet<String>();
     allowedArgs.add(SCHEMA_ARG);
     allowedArgs.add(INPUT_ARG);
@@ -56,43 +62,46 @@ public class CsvToAvro {
     allowedArgs.add(STREAM_ARG);
     for (int i=0; i<args.length; ++i) {
       if (args[i].trim().equals(SCHEMA_ARG)) {
-        fileInput = true;
         ++i;
         if ((args[i] != null) && !allowedArgs.contains(args[i].trim())) {
           schemaPath = args[i];
-        } else {
-System.out.println("1 ");
-          return false;
-        }
+          schemaInput = true;
+        } 
       } else if (args[i].trim().equals(INPUT_ARG)) {
-        fileInput = true;
         ++i;
         if ((args[i] != null) && !allowedArgs.contains(args[i].trim())) {
           inputPath = args[i];
-        } else {
-System.out.println("2 ");
-          return false;
-        }
+          fileInput = true;
+        } 
       } else if (args[i].trim().equals(OUTPUT_ARG)) {
-        fileInput = true;
         ++i;
         if ((args[i] != null) && !allowedArgs.contains(args[i].trim())) {
           outputPath = args[i];
-        } else {
-System.out.println("3 ");
-          return false;
+          fileOutput = true;
         }
       } else if (args[i].trim().equals(STREAM_ARG)) {
-        streamInput = true;
+        streamInputOutput = true;
       } else if (args[i].trim().equals(PROGRAM_NAME)) {
-        System.out.println("I'm here " + args[i]);
-        // pass
+        continue;
       } else {
         System.out.println("4 >>>" + args[i] + "<<<");
         return false;
       }
     }
-    if (fileInput && streamInput) {
+    // schema is a n obligatory parameter
+    if (!schemaInput) {
+      return false;
+    }
+    // if any of fileInput/fileOutput is set, the other also has to be set
+    if ((fileInput || fileOutput) && !(fileInput && fileOutput)) {
+      return false;
+    }
+    // it should be one of in/out from file or stream
+    if ((fileInput || fileOutput) && streamInputOutput) {
+      return false;
+    }
+    // it should be at least on of in/out from file or stream
+    if (!(fileInput || fileOutput) && !streamInputOutput) {
       return false;
     }
     return true;

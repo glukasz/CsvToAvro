@@ -39,7 +39,7 @@ public class TestCsvToAvroInputFileOutputFile {
   @Test
   public void testConversion() {
     String [] avroFields = {"id", "look_id", "product_id", "name", "description", "gender"};
-    String [][] expectedOutput = {{"1", "12", "123", "null", "null", "male", "newborn"},
+    String [][] expectedOutput = {{"1", "null", "123", "null", "null", "male", "newborn"},
           {"2", "12", "23", "null", "null", "female", "infant"},
           {"3", "14", "123", "null", "null", "unisex", "infant"},
           {"5", "12", "123", "null", "null", "female", "toddler"},

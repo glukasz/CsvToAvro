@@ -1,5 +1,5 @@
 gender, brand, size, product_type, id, look_id , link, age_group, product_id
-male,zzz,L, p1, 1, 12, www.address.com, newborn, 123
+male,zzz,L, p1, 1, , www.address.com, newborn, 123
 female,zzz,XL, pt2, 2, 12, www.address.com, infant, 23
 unisex,xxx,S, pt1,3, 14, www.address.com, infant, 123
 male,yyy,XXL, pt3,4, www.address.com, infant, 23

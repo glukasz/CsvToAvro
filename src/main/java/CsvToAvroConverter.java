@@ -3,6 +3,7 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.io.File;
 import java.util.Map;
+import java.io.BufferedOutputStream;
 import java.util.LinkedList;
 import org.apache.avro.Schema;
 import org.apache.avro.io.DatumWriter;
@@ -11,6 +12,9 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.file.DataFileWriter.AppendWriteException;
+import java.util.logging.Logger;
+import java.util.logging.FileHandler;
+import java.util.logging.SimpleFormatter;
 
 public class CsvToAvroConverter {
   private final static String CSV_DELIMITER = ",";
@@ -18,32 +22,41 @@ public class CsvToAvroConverter {
   private CsvReader csvReader;
   private AvroSchema as;
   private Schema schema;
-  private File outFile;
   private int errorCount = 0;
+  private BufferedOutputStream out;
+  private DatumWriter<GenericRecord> datumWriter;
+  private DataFileWriter<GenericRecord> dataFileWriter;
+  private Logger logger = Logger.getLogger(CsvToAvroConverter.class.getName());  
+  private FileHandler fh; 
+     
 
 
   public CsvToAvroConverter(String inputPath, String schemaPath, String outputPath) throws IOException {
     csvReader = new CsvReader(inputPath);
     as = new AvroSchema(schemaPath);
     schema = new Schema.Parser().parse(new File(schemaPath));
-    outFile = new File(outputPath);
+    datumWriter = new GenericDatumWriter<GenericRecord>(schema);
+    dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
+    dataFileWriter.create(schema, new File(outputPath)); 
   }
 
   public CsvToAvroConverter(InputStream inStream, String schemaPath, OutputStream outputStream) throws IOException {
     csvReader = new CsvReader(inStream);
     as = new AvroSchema(schemaPath);
     schema = new Schema.Parser().parse(new File(schemaPath));
-    //outFile = new File(outputPath);
+    datumWriter = new GenericDatumWriter<GenericRecord>(schema);
+    dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
+    dataFileWriter.create(schema, new BufferedOutputStream(outputStream)); 
   }
 
   public void convert() throws IOException {
 
-    String [] csvHeaders = csvReader.getHeaderFields();
-    int errorCount = 0;
+    fh = new FileHandler("csvToAvro.log");   
+    logger.setUseParentHandlers(false);
+    logger.addHandler(fh); 
 
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<GenericRecord>(schema);
-    DataFileWriter<GenericRecord> dataFileWriter = new DataFileWriter<GenericRecord>(datumWriter);
-    dataFileWriter.create(schema, outFile);  
+    String [] csvHeaders = csvReader.getHeaderFields();
+    int errorCount = 0;  
 
     Map<String, String> schemaFields = as.getFields();
     Map<String, String> schemaTypes = as.getTypes();
@@ -84,9 +97,11 @@ public class CsvToAvroConverter {
         // but it should continue and appropriate log entry should be added
         // TODO add logging here
        // System.out.println(ex.getMessage());
-        ex.printStackTrace();
+        logger.warning("Problem serializing object: " + ex.getMessage());
       }
     }
+
+    logger.warning("I'm working");
     dataFileWriter.close();
   }
 
@@ -97,6 +112,9 @@ public class CsvToAvroConverter {
   }
 
   private Object getAvroValue(String value, String type) {
+    if (value.trim().equals("")) {
+      return null;
+    }
     switch(type) {
       case "array":
         return new LinkedList<String>().add(value);
