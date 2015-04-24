@@ -63,12 +63,11 @@ public class CsvToAvroConverter {
     String line;
     while ((line = csvReader.readLine()) != null) {
       String [] data = line.split(CSV_DELIMITER);
-
       // if given line in csv file has different number of fields than
       // the number of fields in headers it mean the line is corrupted
       // - skip it then
       if (data.length != csvHeaders.length) {
-        ++errorCount
+        ++errorCount;
         continue;
       }
 
@@ -128,7 +127,7 @@ public class CsvToAvroConverter {
       case "long":
         return Long.parseLong(value);
       case "float":
-        return Float.parseDouble(value);
+        return Float.parseFloat(value);
       case "double":
         return Double.parseDouble(value);
       default:
