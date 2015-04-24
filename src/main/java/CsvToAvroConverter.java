@@ -3,6 +3,7 @@ import java.io.OutputStream;
 import java.io.IOException;
 import java.io.File;
 import java.util.Map;
+import java.util.LinkedList;
 import org.apache.avro.Schema;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.file.DataFileWriter;
@@ -45,6 +46,7 @@ public class CsvToAvroConverter {
     dataFileWriter.create(schema, outFile);  
 
     Map<String, String> schemaFields = as.getFields();
+    Map<String, String> schemaTypes = as.getTypes();
 
     String line;
     while ((line = csvReader.readLine()) != null) {
@@ -62,18 +64,16 @@ public class CsvToAvroConverter {
       for (int i=0; i<data.length; ++i) {
         // store csv entry in avro file if given csv field exists in avro schema
         // schema it as base name (it case alias is used in csv file)
-        if (csvHeaders[i].equals("additional_image_link") || csvHeaders[i].equals("price") || csvHeaders[i].equals("sale_price") || csvHeaders[i].equals("return_days")) {
-          continue;
-        }
        
         if (schemaFields.containsKey(csvHeaders[i])) {
           if (data[i].trim().equals("")) {
             product.put(schemaFields.get(csvHeaders[i]), null);
           } else {
-            product.put(schemaFields.get(csvHeaders[i]), data[i].trim());
+            product.put(schemaFields.get(csvHeaders[i]), getAvroValue(data[i].trim(), schemaTypes.get(csvHeaders[i])));
           }
         }
       }
+
       try {
         dataFileWriter.append(product);
       } catch (AppendWriteException ex) {
@@ -83,7 +83,8 @@ public class CsvToAvroConverter {
         // in that case whole serialization shouldn;t be interrupted
         // but it should continue and appropriate log entry should be added
         // TODO add logging here
-        System.out.println(ex.getMessage());
+       // System.out.println(ex.getMessage());
+        ex.printStackTrace();
       }
     }
     dataFileWriter.close();
@@ -95,33 +96,23 @@ public class CsvToAvroConverter {
     }
   }
 
-  //private String [] 
+  private Object getAvroValue(String value, String type) {
+    switch(type) {
+      case "array":
+        return new LinkedList<String>().add(value);
+      case "boolean":
+        return Boolean.getBoolean(value);
+      case "int":
+        return Integer.parseInt(value);
+      case "long":
+        return Long.parseLong(value);
+      case "double":
+        return Double.parseDouble(value);
+      default:
+        return value;
+    }
+  }
+
 }
 
 
-
- /*     String line = in.readLine();
-      String [] csvHeaders;
-      if (line != null) {
-        csvHeaders = line.split(",");
-      } else {
-        System.out.println("Input is empty");
-        return;
-      }
-
-      // to keep the order
-      Map<String, Boolean> headers = new LinkedHashMap<String, Boolean>();
-      Set<String> avroFields = as.getFields();
-
-      if (csvHeaders != null) {
-        for (String s: csvHeaders) {
-          if (avroFields.contains(s)) {
-            headers.put(s, true);
-          } else {
-            headers.put(s, false);
-          }
-        }
-      }
-
-
-      DatumReader<GenericRecord> datumReader = new GenericDatumReader<GenericRecord>(schema);*/

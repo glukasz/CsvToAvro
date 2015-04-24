@@ -34,7 +34,8 @@ public class TestAvroSchemaReader {
   @Test
   public void testDetectedFields() {
     String [] fields = {"id", "look_id", "color_id", "photo_group_id", "product_id", "item_group_id",
-              "name", "title", "description", "gender", "age_group"};
+              "name", "title", "description", "gender", "age_group", "sale_price", 
+              "return_days", "additional_image_link"};
 
     Set<String> schemaFields = as.getFieldsSet();
 

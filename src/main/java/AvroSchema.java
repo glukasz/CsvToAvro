@@ -13,6 +13,7 @@ public class AvroSchema {
   private final static String NAME_PATH = "name";
   private final static String FIELDS_PATH = "fields";
   private final static String ALIASES_PATH = "aliases";
+  private final static String TYPE_PATH = "type";
 
   private String className;
   // keep fields in hash collection for performance reason
@@ -21,6 +22,7 @@ public class AvroSchema {
   // the key is name of field, the value is the field the key is alias for
   // if given key has no aliases key and value are the same
   private Map<String,String> fields = new HashMap<String,String>();
+  private Map<String,String> types = new HashMap<String,String>();
 
   public AvroSchema(String schemaFile) throws IOException {
     // read JSON file
@@ -53,19 +55,49 @@ public class AvroSchema {
         String fieldName = field.path(NAME_PATH).asText();
         fields.put(fieldName, fieldName);
 
+        String type;
+        if (field.path(TYPE_PATH) == null) {
+           throw new AvroRuntimeException("Corrupted avro schema file - no 'type' field");
+        } 
+        // this is some complex type to extract type information from that
+        else {
+          JsonNode typeNode = field.path(TYPE_PATH);
+          // if this is primitive type its string representation starts with "
+          if (typeNode.toString().startsWith("\"")) {
+            type = typeNode.asText();
+            types.put(fieldName, type);
+          } 
+          // if it starts with [ it's an union - I have no option to discover in csv file
+          // different types so I assume that in out case union means either given type or null
+          else if (typeNode.toString().startsWith("[")) {
+            type = parseUnion(typeNode.toString().substring(1, typeNode.toString().length() - 1));
+            types.put(fieldName, type);
+          }
+          // if it starts with [ it's an union - I have no option to discover in csv file
+          // different types so I assume that in out case union means either given type or null
+          //else if (typeNode.toString().startsWith("{")) {
+          //   String type = parseDict(typeNode.toString().substring(1, typeNode.toString().length() - 1));
+          //   types.put(fieldName, type);
+          //}
+          // other types in our case are enums so 
+          else {
+            type = getType(typeNode.toString());
+            types.put(fieldName, type);
+          }
+        }
+
         // add to the map also the aliases with information what given field is alias for
         JsonNode aliasesNode = field.path(ALIASES_PATH);
         if (aliasesNode.isArray()) {
            for (JsonNode alias: aliasesNode) {
              fields.put(alias.asText(), fieldName);
+             types.put(alias.asText(), type);
            }
         }
       }
     } else {
       throw new AvroRuntimeException("Corrupted avro schema file - 'fields' field not an array");
     }
-
-      
   }
 
   public String getClassName() {
@@ -78,5 +110,48 @@ public class AvroSchema {
 
   public Map<String, String> getFields() {
     return fields;
+  }
+
+  public Map<String, String> getTypes() {
+    return types;
+  }
+
+  private String getType(String type) {
+    switch (type.trim().toLowerCase()) {
+        case "array":
+            return "array";
+        case "boolean":
+            return "boolean";
+        case "int":
+          return "int";
+        case "long":
+            return "long";
+        case "float":
+        case "double":
+            return "double";
+        default:
+            return "string";
+    }
+  }
+
+  private String parseUnion(String union) {
+    for (String s: union.replace("\"", "").split(",")) {
+      if (s != "null") {
+        if (s.startsWith("{")) {
+          return parseDict(s.substring(1, s.length()));
+        } else {
+          return getType(s);
+        }
+      }
+    }
+    return "";
+  }
+
+  private String parseDict(String dict) {
+    String [] toRet = dict.split(":");
+    if (toRet[1] != null) {
+      return getType(toRet[1]);
+    }
+    return "";
   }
 }

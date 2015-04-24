@@ -13,6 +13,9 @@
     }},
     {"name": "age_group", "type": {
       "type":"enum", "name":"age_group_values", "symbols":["newborn", "infant", "toddler", "kids", "adults"]
-    }}
+    }},
+    {"name": "sale_price", "type": ["double", "null"]},
+    {"name": "return_days", "type": ["int", "null"]},
+    {"name": "additional_image_link", "type": [{ "type": "array", "items": "string" }, "null"]}
   ]
 }
