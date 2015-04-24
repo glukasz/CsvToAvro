@@ -55,11 +55,11 @@ public class AvroSchema {
         String fieldName = field.path(NAME_PATH).asText();
         fields.put(fieldName, fieldName);
 
+        // parse types of fields
         String type;
         if (field.path(TYPE_PATH) == null) {
            throw new AvroRuntimeException("Corrupted avro schema file - no 'type' field");
         } 
-        // this is some complex type to extract type information from that
         else {
           JsonNode typeNode = field.path(TYPE_PATH);
           // if this is primitive type its string representation starts with "
@@ -68,17 +68,11 @@ public class AvroSchema {
             types.put(fieldName, type);
           } 
           // if it starts with [ it's an union - I have no option to discover in csv file
-          // different types so I assume that in out case union means either given type or null
+          // union consisting of different types so I assume that in out case union means either given type or null
           else if (typeNode.toString().startsWith("[")) {
             type = parseUnion(typeNode.toString().substring(1, typeNode.toString().length() - 1));
             types.put(fieldName, type);
           }
-          // if it starts with [ it's an union - I have no option to discover in csv file
-          // different types so I assume that in out case union means either given type or null
-          //else if (typeNode.toString().startsWith("{")) {
-          //   String type = parseDict(typeNode.toString().substring(1, typeNode.toString().length() - 1));
-          //   types.put(fieldName, type);
-          //}
           // other types in our case are enums so 
           else {
             type = getType(typeNode.toString());
@@ -116,7 +110,11 @@ public class AvroSchema {
     return types;
   }
 
-  private String getType(String type) {
+  // I only support subset of avro types
+  // (assuming that using csv file as input limits 
+  // avro types we can use)
+  // the 'unsupported' avro types are threated as string
+  private String getType(String type) { 
     switch (type.trim().toLowerCase()) {
         case "array":
             return "array";
@@ -127,6 +125,7 @@ public class AvroSchema {
         case "long":
             return "long";
         case "float":
+            return "float";
         case "double":
             return "double";
         default:
@@ -134,6 +133,9 @@ public class AvroSchema {
     }
   }
 
+  // having an union get its time
+  // (asumming in our case union means eithter some type
+  // or null)
   private String parseUnion(String union) {
     for (String s: union.replace("\"", "").split(",")) {
       if (s != "null") {
@@ -147,6 +149,7 @@ public class AvroSchema {
     return "";
   }
 
+  // naivly parse simple dict "type":"array"
   private String parseDict(String dict) {
     String [] toRet = dict.split(":");
     if (toRet[1] != null) {

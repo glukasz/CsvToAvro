@@ -2,16 +2,12 @@ import java.util.Set;
 import java.util.HashSet;
 
 
-
-
 public class CsvToAvro {
   private final static String PROGRAM_NAME = "CsvToAvro";
   private final static String SCHEMA_ARG = "--schema";
   private final static String INPUT_ARG = "--input";
   private final static String OUTPUT_ARG = "--output";
   private final static String STREAM_ARG = "-c";
-  private final static int FILE_INPUT_ARGS = 3;
-  private final static int STREAM_INPUT_ARGS = 1;
 
   private static boolean streamInputOutput = false;
   private static boolean fileInput = false;
@@ -19,10 +15,7 @@ public class CsvToAvro {
 
   private static String inputPath;
   private static String outputPath;
-  private static String schemaPath;
-
-  private static String schemafile = "/home/lgaza/sandbox/gabor/csvtoavro/products.avsc";
-  
+  private static String schemaPath;  
 
 
   public static void main(String [] args) {
@@ -60,6 +53,7 @@ public class CsvToAvro {
     allowedArgs.add(INPUT_ARG);
     allowedArgs.add(OUTPUT_ARG);
     allowedArgs.add(STREAM_ARG);
+
     for (int i=0; i<args.length; ++i) {
       if (args[i].trim().equals(SCHEMA_ARG)) {
         ++i;
@@ -88,7 +82,7 @@ public class CsvToAvro {
         return false;
       }
     }
-    // schema is a n obligatory parameter
+    // schema is an obligatory parameter
     if (!schemaInput) {
       return false;
     }

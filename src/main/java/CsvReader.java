@@ -30,7 +30,7 @@ public class CsvReader {
         // I assume that if there is an empty string in the header (like 'sth, , sth2') this is an error      
         // first calculate number of commas in the header
         int commasCount = headersLine.length() - headersLine.replace(CSV_DELIMITER, "").length();
-        // there can't be less than commaCount - 1 comas in the header (because this is as split() works)
+        // there can't be less than commaCount - 1 commas in the header (because this is as split() works)
         // the only correct case is when number of header fields equals commasCount - 1 (each field is separated by comma)
         // if there is more tha commasCount - 1 commas in the header it means the csv file is corrupted
         // (I also don't allow adding auxilary comma after the last element of the header)

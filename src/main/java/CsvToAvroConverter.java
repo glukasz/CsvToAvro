@@ -30,7 +30,6 @@ public class CsvToAvroConverter {
   private FileHandler fh; 
      
 
-
   public CsvToAvroConverter(String inputPath, String schemaPath, String outputPath) throws IOException {
     csvReader = new CsvReader(inputPath);
     as = new AvroSchema(schemaPath);
@@ -69,7 +68,7 @@ public class CsvToAvroConverter {
       // the number of fields in headers it mean the line is corrupted
       // - skip it then
       if (data.length != csvHeaders.length) {
-        ++errorCount;
+        ++errorCount
         continue;
       }
 
@@ -95,22 +94,26 @@ public class CsvToAvroConverter {
         // or non-null value has value of null)
         // in that case whole serialization shouldn;t be interrupted
         // but it should continue and appropriate log entry should be added
-        // TODO add logging here
-       // System.out.println(ex.getMessage());
         logger.warning("Problem serializing object: " + ex.getMessage());
       }
     }
 
-    logger.warning("I'm working");
-    dataFileWriter.close();
+    if (errorCount != 0) {
+      logger.info("There was " + errorCount + " errors during serialization");
+    }
   }
 
   public void close() throws IOException {
     if (csvReader != null) {
       csvReader.close();
     }
+    if (dataFileWriter != null) {
+      dataFileWriter.close();
+    }
   }
 
+  // having string representation of avro type
+  // return Java type that can be store in avro file
   private Object getAvroValue(String value, String type) {
     if (value.trim().equals("")) {
       return null;
@@ -124,6 +127,8 @@ public class CsvToAvroConverter {
         return Integer.parseInt(value);
       case "long":
         return Long.parseLong(value);
+      case "float":
+        return Float.parseDouble(value);
       case "double":
         return Double.parseDouble(value);
       default:
